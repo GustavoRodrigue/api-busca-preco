@@ -1,53 +1,39 @@
-import { AppDataSource } from "../data-source"
-import { NextFunction, Request, Response } from "express"
+import { Request } from 'express'
 import { User } from "../entity/User"
+import { BaseController } from "./BaseController"
 
-export class UserController {
+export class UserController extends BaseController<User>{
 
-    private userRepository = AppDataSource.getRepository(User)
-
-    async all(request: Request, response: Response, next: NextFunction) {
-        return this.userRepository.find()
+    constructor() {
+        super(User);
     }
 
-    async one(request: Request, response: Response, next: NextFunction) {
-        const id = parseInt(request.params.id)
+    async createUser(request: Request) {
+        let { name, photo, matriula, isRoot, password, confirmPassword } = request.body;
+        super.isRequired(name, 'Informe o nome');
+        super.isRequired(photo, 'Informe a foto');
+        super.isRequired(matriula, 'Informe o email');
+        super.isRequired(password, 'Informe o senha');
+        super.isRequired(confirmPassword, 'Informe a confirmação da senha');
 
+        let _user = new User();
+        _user.name = name;
+        _user.photo = photo;
+        _user.matricula = matriula;
+        _user.password = password;
+        _user.isRoot = isRoot;
 
-        const user = await this.userRepository.findOne({
-            where: {  }
-        })
+        return super.save(_user);
 
-        if (!user) {
-            return "unregistered user"
-        }
-        return user
     }
 
-    async save(request: Request, response: Response, next: NextFunction) {
-        const { firstName, lastName, age } = request.body;
+    async save(request: Request) {
+        let _user = <User>request.body;
+        super.isRequired(_user.name, 'O nome do usuário é obrigatório');
+        super.isRequired(_user.photo, 'A foto do usuário é obrigatória');
+        super.isRequired(_user.matricula, 'O email do usuário é obrigatório');
+        super.isRequired(_user.password, 'A senha do usuário é obrigatória');
 
-        const user = Object.assign(new User(), {
-            firstName,
-            lastName,
-            age
-        })
-
-        return this.userRepository.save(user)
+        return super.save(_user);
     }
-
-    async remove(request: Request, response: Response, next: NextFunction) {
-        const id = parseInt(request.params.id)
-
-        let userToRemove = await this.userRepository.findOneBy({  })
-
-        if (!userToRemove) {
-            return "this user not exist"
-        }
-
-        await this.userRepository.remove(userToRemove)
-
-        return "user has been removed"
-    }
-
 }
